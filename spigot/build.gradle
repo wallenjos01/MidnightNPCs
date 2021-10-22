@@ -1,0 +1,83 @@
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+repositories {
+    maven {
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        url 'https://libraries.minecraft.net/'
+    }
+}
+
+configurations {
+    shade
+    compileOnly.extendsFrom(shade)
+}
+
+dependencies {
+
+    compileOnly("org.spigotmc:spigot:${project.ext.minecraftVersion}-R0.1-SNAPSHOT")
+
+    shade(project(':api'))
+    shade(project(':common'))
+
+}
+
+processResources {
+
+    Map<String, ?> ex = new HashMap<>()
+    ex.put("version", project.ext.fullVersion)
+    ex.put("minecraftVersion", project.ext.minecraftVersion)
+    ex.put("minecraftMajorVersion", project.ext.minecraftMajorVersion)
+    ex.put("modid", project.ext.modid)
+    ex.put("modname", project.ext.modname)
+    ex.put("modclass", project.ext.modclass)
+
+    filesMatching("plugin.yml") {
+        expand(ex)
+    }
+}
+
+shadowJar {
+
+    setArchivesBaseName("${project.ext.archiveName}-spigot")
+    configurations = [ project.getConfigurations().shade ]
+
+    dependencies {
+
+        include(project(':api'))
+        include(project(':common'))
+
+    }
+
+}
+
+artifacts {
+    jar
+    sourcesJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            version = project.ext.publicationVersion
+            artifact(jar)
+            artifact(sourcesJar)
+        }
+    }
+
+    repositories {
+        maven {
+            if (project.hasProperty("pubUrl")) {
+                url = project.pubUrl as String
+                credentials {
+                    username project.pubUser as String
+                    password project.pubPass as String
+                }
+            }
+        }
+    }
+}

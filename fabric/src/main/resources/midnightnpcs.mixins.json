@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.m1dnightninja.midnightnpcs.fabric.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "AccessorPlayer",
+    "MixinCommandBlock",
+    "MixinServerEntity",
+    "MixinServerPlayer"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "command.error.no_entity": "&cThere are no NPCs in that direction!",
+  "command.error.no_selected": "&cYou do not have an NPC selected!",
+  "command.error.invalid_trait": "&cThat is not a valid trait!",
+  "command.error.no_trait": "&cThat NPC does not have that trait!",
+  "command.select.result": "&aSelected &f%midnightnpcs_npc_name%&a!",
+  "command.rename.result": "&aNPC renamed to &f%midnightnpcs_npc_name%&a!",
+  "command.create.result": "&aCreated an NPC named &f%midnightnpcs_npc_name%&a!",
+  "command.type.result": "&aChanged the type of &f%midnightnpcs_npc_name%&a!",
+  "command.commands.add.result": "&aAdded command to &f%midnightnpcs_npc_name%&a!",
+  "command.commands.clear.result": "&aRemoved all commands from &f%midnightnpcs_npc_name%&a!",
+  "command.commands.list.header": "&aRegistered commands:",
+  "command.commands.list.entry": "&7 - &f%command%",
+  "command.traits.add.result": "&aAdded trait to &f%midnightnpcs_npc_name%&a!",
+  "command.traits.remove.result": "&aRemove trait from &f%midnightnpcs_npc_name%&a!",
+  "command.traits.set.result": "&aUpdated trait config!",
+  "command.traits.fill.result": "&aUpdated trait config!",
+  "command.respawn.result": "&aRespawned &f%midnightnpcs_npc_name%&a!",
+  "command.look.enabled": "%midnightnpcs_npc_name% &awill now look at players",
+  "command.look.disabled": "%midnightnpcs_npc_name% &awill no longer look at players",
+  "command.teleport.result": "&aTeleported NPC"
+}
