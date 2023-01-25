@@ -1,7 +1,7 @@
 package org.wallentines.midnightnpcs.api;
 
+import org.wallentines.midnightcore.api.text.LangProvider;
 import org.wallentines.midnightlib.config.ConfigSection;
-import org.wallentines.midnightcore.api.module.lang.LangProvider;
 import org.wallentines.midnightlib.registry.Identifier;
 import org.wallentines.midnightnpcs.api.npc.NPC;
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public abstract class MidnightNPCsAPI {
 
 

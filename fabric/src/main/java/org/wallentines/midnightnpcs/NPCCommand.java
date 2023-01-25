@@ -1,4 +1,4 @@
-package org.wallentines.midnightnpcs.fabric.command;
+package org.wallentines.midnightnpcs;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -7,11 +7,13 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.*;
+import org.wallentines.midnightcore.api.text.CustomPlaceholderInline;
 import org.wallentines.midnightcore.fabric.util.CommandUtil;
 import org.wallentines.midnightlib.config.ConfigSection;
 import org.wallentines.midnightcore.api.item.InventoryGUI;
-import org.wallentines.midnightcore.api.module.lang.CustomPlaceholderInline;
 import org.wallentines.midnightcore.api.player.Location;
 import org.wallentines.midnightlib.config.serialization.json.JsonConfigProvider;
 import org.wallentines.midnightlib.math.Vec3d;
@@ -25,20 +27,13 @@ import org.wallentines.midnightnpcs.api.npc.NPCActionType;
 import org.wallentines.midnightnpcs.api.npc.NPCSelector;
 import org.wallentines.midnightnpcs.api.trait.Trait;
 import org.wallentines.midnightnpcs.api.trait.TraitType;
-import org.wallentines.midnightnpcs.common.npc.NPCManager;
-import org.wallentines.midnightnpcs.fabric.entity.NPCEntity;
-import org.wallentines.midnightnpcs.fabric.npc.FabricNPC;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.UuidArgument;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,100 +45,103 @@ public class NPCCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 
         LiteralArgumentBuilder<CommandSourceStack> commands = Commands.literal("npc")
-                .requires(Permissions.require("midnightnpcs.command.npc", 2))
-                .then(Commands.literal("select")
-                    .executes(context -> executeSelect(context, null))
-                    .then(Commands.argument("id", UuidArgument.uuid())
-                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(NPCManager.INSTANCE.getIds(), builder, UUID::toString, uid -> Component.literal(uid.toString())))
-                        .executes(context -> executeSelect(context, context.getArgument("id", UUID.class)))
-                    )
+            .requires(Permissions.require("midnightnpcs.command.npc", 2))
+            .then(Commands.literal("select")
+                .executes(context -> executeSelect(context, null))
+                .then(Commands.argument("id", UuidArgument.uuid())
+                    .suggests((context, builder) -> SharedSuggestionProvider.suggest(NPCManager.INSTANCE.getIds(), builder, UUID::toString, uid -> Component.literal(uid.toString())))
+                    .executes(context -> executeSelect(context, context.getArgument("id", UUID.class)))
                 )
-                .then(Commands.literal("rename")
-                    .then(Commands.argument("name", StringArgumentType.greedyString())
-                        .executes(context -> executeRename(context, context.getArgument("name", String.class)))
-                    )
+            )
+            .then(Commands.literal("rename")
+                .then(Commands.argument("name", StringArgumentType.greedyString())
+                    .executes(context -> executeRename(context, context.getArgument("name", String.class)))
                 )
-                .then(Commands.literal("create")
-                    .then(Commands.argument("name", StringArgumentType.greedyString())
-                        .executes(context -> executeCreate(context, context.getArgument("name", String.class)))
-                    )
+            )
+            .then(Commands.literal("create")
+                .then(Commands.argument("name", StringArgumentType.greedyString())
+                    .executes(context -> executeCreate(context, context.getArgument("name", String.class)))
                 )
-                .then(Commands.literal("commands")
-                    .then(Commands.literal("add")
-                        .then(Commands.argument("type", ResourceLocationArgument.id())
-                            .suggests((context, builder) -> {
-
-                                List<String> ids = new ArrayList<>();
-                                for(NPCActionType type : NPCActionType.ACTION_TYPE_REGISTRY) {
-                                    ids.add(NPCActionType.ACTION_TYPE_REGISTRY.getId(type).toString());
-                                }
-
-                                return SharedSuggestionProvider.suggest(ids, builder);
-                            })
-                            .then(Commands.argument("command", StringArgumentType.greedyString())
-                                .executes(context -> executeAddCommand(context, context.getArgument("type", ResourceLocation.class), context.getArgument("command", String.class)))
-                            )
-                        )
-                    )
-                    .then(Commands.literal("clear")
-                        .executes(NPCCommand::executeClearCommands)
-                    )
-                    .then(Commands.literal("list")
-                        .executes(NPCCommand::executeListCommands)
-                    )
-                )
-                .then(Commands.literal("type")
+            )
+            .then(Commands.literal("commands")
+                .then(Commands.literal("add")
                     .then(Commands.argument("type", ResourceLocationArgument.id())
-                        .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(Registry.ENTITY_TYPE.keySet(), builder))
-                        .executes(context -> executeType(context, context.getArgument("type", ResourceLocation.class)))
-                    )
-                )
-                .then(Commands.literal("traits")
-                    .then(Commands.literal("add")
-                        .then(Commands.argument("trait", ResourceLocationArgument.id())
-                            .suggests((context, builder) -> {
+                        .suggests((context, builder) -> {
 
-                                List<ResourceLocation> locs = new ArrayList<>();
-                                for(TraitType traitType : TraitType.TRAIT_REGISTRY) {
-                                    locs.add(ConversionUtil.toResourceLocation(TraitType.TRAIT_REGISTRY.getId(traitType)));
-                                }
+                            List<String> ids = new ArrayList<>();
+                            for(NPCActionType type : NPCActionType.ACTION_TYPE_REGISTRY) {
+                                ids.add(NPCActionType.ACTION_TYPE_REGISTRY.getId(type).toString());
+                            }
 
-                                return SharedSuggestionProvider.suggestResource(locs, builder);
-                            })
-                            .executes(context -> executeAddTrait(context, context.getArgument("trait", ResourceLocation.class)))
+                            return SharedSuggestionProvider.suggest(ids, builder);
+                        })
+                        .then(Commands.argument("command", StringArgumentType.greedyString())
+                            .executes(context -> executeAddCommand(context, context.getArgument("type", ResourceLocation.class), context.getArgument("command", String.class)))
                         )
                     )
-                    .then(Commands.literal("remove")
+                )
+                .then(Commands.literal("clear")
+                    .executes(NPCCommand::executeClearCommands)
+                )
+                .then(Commands.literal("list")
+                    .executes(NPCCommand::executeListCommands)
+                )
+            )
+            .then(Commands.literal("type")
+                .then(Commands.argument("type", ResourceLocationArgument.id())
+                    .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(BuiltInRegistries.ENTITY_TYPE.keySet(), builder))
+                    .executes(context -> executeType(context, context.getArgument("type", ResourceLocation.class)))
+                )
+            )
+            .then(Commands.literal("traits")
+                .then(Commands.literal("add")
+                    .then(Commands.argument("trait", ResourceLocationArgument.id())
+                        .suggests((context, builder) -> {
+
+                            List<ResourceLocation> locs = new ArrayList<>();
+                            for(TraitType traitType : TraitType.TRAIT_REGISTRY) {
+                                locs.add(ConversionUtil.toResourceLocation(TraitType.TRAIT_REGISTRY.getId(traitType)));
+                            }
+
+                            return SharedSuggestionProvider.suggestResource(locs, builder);
+                        })
+                        .then(Commands.argument("data", StringArgumentType.greedyString())
+                            .executes(context -> executeAddTrait(context, context.getArgument("trait", ResourceLocation.class), context.getArgument("data", String.class)))
+                        )
+                        .executes(context -> executeAddTrait(context, context.getArgument("trait", ResourceLocation.class), null))
+                    )
+                )
+                .then(Commands.literal("remove")
+                    .then(Commands.argument("trait", ResourceLocationArgument.id())
+                        .suggests(NPCCommand::suggestNPCTraits)
+                        .executes(context -> executeRemoveTrait(context, context.getArgument("trait", ResourceLocation.class)))
+                    )
+                )
+                .then(Commands.literal("config")
+                    .then(Commands.literal("set")
                         .then(Commands.argument("trait", ResourceLocationArgument.id())
                             .suggests(NPCCommand::suggestNPCTraits)
-                            .executes(context -> executeRemoveTrait(context, context.getArgument("trait", ResourceLocation.class)))
-                        )
-                    )
-                    .then(Commands.literal("config")
-                        .then(Commands.literal("set")
-                            .then(Commands.argument("trait", ResourceLocationArgument.id())
-                                .suggests(NPCCommand::suggestNPCTraits)
-                                .then(Commands.argument("data", StringArgumentType.greedyString())
-                                    .executes(context -> executeSetTraitConfig(context, context.getArgument("trait", ResourceLocation.class), context.getArgument("data", String.class)))
-                                )
+                            .then(Commands.argument("data", StringArgumentType.greedyString())
+                                .executes(context -> executeSetTraitConfig(context, context.getArgument("trait", ResourceLocation.class), context.getArgument("data", String.class)))
                             )
                         )
-                        .then(Commands.literal("merge")
-                            .then(Commands.argument("trait", ResourceLocationArgument.id())
-                                .suggests(NPCCommand::suggestNPCTraits)
-                                .then(Commands.argument("data", StringArgumentType.greedyString())
-                                    .executes(context -> executeFillTraitConfig(context, context.getArgument("trait", ResourceLocation.class), context.getArgument("data", String.class)))
-                                )
+                    )
+                    .then(Commands.literal("merge")
+                        .then(Commands.argument("trait", ResourceLocationArgument.id())
+                            .suggests(NPCCommand::suggestNPCTraits)
+                            .then(Commands.argument("data", StringArgumentType.greedyString())
+                                .executes(context -> executeFillTraitConfig(context, context.getArgument("trait", ResourceLocation.class), context.getArgument("data", String.class)))
                             )
                         )
                     )
                 )
-                .then(Commands.literal("respawn")
-                    .executes(NPCCommand::executeRespawn)
-                )
-                .then(Commands.literal("tp")
-                    .executes(NPCCommand::executeTeleport)
-                );
+            )
+            .then(Commands.literal("respawn")
+                .executes(NPCCommand::executeRespawn)
+            )
+            .then(Commands.literal("tp")
+                .executes(NPCCommand::executeTeleport)
+            );
 
         dispatcher.register(commands);
 
@@ -152,22 +150,29 @@ public class NPCCommand {
     private static int executeSelect(CommandContext<CommandSourceStack> stack, UUID uid) {
 
         Entity pl = stack.getSource().getEntity();
-        NPC npc;
+        NPC npc = null;
 
         if(!(pl instanceof NPCSelector)) return 0;
 
         if(uid == null) {
 
-            AABB aabb = pl.getBoundingBox().move(pl.getForward().scale(2.0f)).inflate(0.3d);
+            AABB aabb = pl.getBoundingBox().inflate(10.0d);
             List<Entity> entities = pl.level.getEntities(pl, aabb, entity -> entity instanceof NPCEntity);
 
-            if(entities.isEmpty()) {
+            for(Entity ent : entities) {
+
+                NPCEntity n = (NPCEntity) ent;
+                if(n.isLookedAt(pl)) {
+                    npc = n.getNPC();
+                    break;
+                }
+            }
+
+            if(npc == null) {
 
                 CommandUtil.sendCommandFailure(stack, MidnightNPCsAPI.getInstance().getLangProvider(), "command.error.no_entity");
                 return 0;
             }
-
-            npc = ((NPCEntity) entities.get(0)).getNPC();
 
         } else {
 
@@ -193,15 +198,25 @@ public class NPCCommand {
 
     private static int executeCreate(CommandContext<CommandSourceStack> stack, String string) {
 
-        NPC n = new FabricNPC(getLocation(stack), new Identifier("minecraft", "player"), null, MComponent.parse(string));
-        n.spawn();
+        try {
+            Vec3 location = stack.getSource().getPosition();
 
-        Entity ent = stack.getSource().getEntity();
-        if(ent instanceof NPCSelector) {
-            ((NPCSelector) ent).setSelectedNPC(n);
+            NPCEntity npc = new NPCEntity(MidnightNPCs.NPC_TYPE, stack.getSource().getLevel());
+            npc.setCustomName(ConversionUtil.toComponent(MComponent.parse(string)));
+            npc.setCustomNameVisible(true);
+            npc.teleportTo(location.x, location.y, location.z);
+            stack.getSource().getLevel().addFreshEntity(npc);
+
+            Entity ent = stack.getSource().getEntity();
+            if (ent instanceof NPCSelector) {
+                ((NPCSelector) ent).setSelectedNPC(npc);
+            }
+
+            CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.create.result", npc);
+        } catch (Throwable th) {
+            th.printStackTrace();
+            throw th;
         }
-
-        CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.create.result", n);
 
         return 1;
     }
@@ -249,11 +264,13 @@ public class NPCCommand {
 
         CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.commands.list.header");
 
-        for(NPCAction cmd : n.getCommands()) {
+        for(InventoryGUI.ClickType type : InventoryGUI.ClickType.values()) {
+            for (NPCAction cmd : n.getCommands(type)) {
 
-            CustomPlaceholderInline in = CustomPlaceholderInline.create("command", "(" + NPCActionType.ACTION_TYPE_REGISTRY.getId(cmd.getType()) + ") " + cmd.getValue());
-            CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.commands.list.entry", in);
+                CustomPlaceholderInline in = CustomPlaceholderInline.create("command", "(" + NPCActionType.ACTION_TYPE_REGISTRY.getId(cmd.getType()) + ") " + cmd.getValue());
+                CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.commands.list.entry", in);
 
+            }
         }
 
         return 1;
@@ -270,7 +287,7 @@ public class NPCCommand {
         return 1;
     }
 
-    private static int executeAddTrait(CommandContext<CommandSourceStack> stack, ResourceLocation location) {
+    private static int executeAddTrait(CommandContext<CommandSourceStack> stack, ResourceLocation location, String config) {
 
         NPC n = getSelectedNPC(stack);
         if(n == null) return 0;
@@ -281,9 +298,14 @@ public class NPCCommand {
             return 0;
         }
 
-        n.addTrait(t);
-        CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.traits.add.result", n);
+        ConfigSection sec = getConfigSection(stack, config);
+        if(sec == null) {
+            n.addTrait(t);
+        } else {
+            n.addTrait(t, sec);
+        }
 
+        CommandUtil.sendCommandSuccess(stack, MidnightNPCsAPI.getInstance().getLangProvider(), false, "command.traits.add.result", n);
         return 1;
     }
 
@@ -324,7 +346,7 @@ public class NPCCommand {
             return 0;
         }
 
-        ConfigSection sec = getConfigSection(stack, n, config);
+        ConfigSection sec = getConfigSection(stack, config);
         if(sec == null) return 0;
 
         n.setTraitConfig(type, sec, false);
@@ -345,7 +367,7 @@ public class NPCCommand {
             return 0;
         }
 
-        ConfigSection sec = getConfigSection(stack, n, config);
+        ConfigSection sec = getConfigSection(stack, config);
         if(sec == null) return 0;
 
         n.setTraitConfig(type, sec, true);
@@ -391,7 +413,9 @@ public class NPCCommand {
         return n;
     }
 
-    private static ConfigSection getConfigSection(CommandContext<CommandSourceStack> stack, NPC n, String config) {
+    private static ConfigSection getConfigSection(CommandContext<CommandSourceStack> stack, String config) {
+
+        if(config == null) return null;
 
         ConfigSection sec = JsonConfigProvider.INSTANCE.loadFromString(config);
         if(sec == null) {
@@ -409,7 +433,7 @@ public class NPCCommand {
 
         List<ResourceLocation> locs = new ArrayList<>();
         for(Trait trait : n.getTraits()) {
-            locs.add(ConversionUtil.toResourceLocation(trait.getId()));
+            locs.add(ConversionUtil.toResourceLocation(TraitType.TRAIT_REGISTRY.getId(trait.getType())));
         }
 
         return SharedSuggestionProvider.suggestResource(locs, builder);

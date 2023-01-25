@@ -1,9 +1,9 @@
 package org.wallentines.midnightnpcs.api.npc;
 
+import org.wallentines.midnightcore.api.module.skin.Skinnable;
 import org.wallentines.midnightlib.config.ConfigSection;
 import org.wallentines.midnightcore.api.item.InventoryGUI;
 import org.wallentines.midnightlib.math.Vec3d;
-import org.wallentines.midnightcore.api.module.skin.Skin;
 import org.wallentines.midnightcore.api.player.Location;
 import org.wallentines.midnightcore.api.player.MPlayer;
 import org.wallentines.midnightlib.requirement.Requirement;
@@ -12,9 +12,11 @@ import org.wallentines.midnightcore.api.text.MComponent;
 import org.wallentines.midnightnpcs.api.trait.Trait;
 import org.wallentines.midnightnpcs.api.trait.TraitType;
 
+import java.util.Collection;
 import java.util.UUID;
 
-public interface NPC extends NPCSelector {
+@SuppressWarnings("unused")
+public interface NPC extends NPCSelector, Skinnable {
 
     UUID getUUID();
 
@@ -28,9 +30,7 @@ public interface NPC extends NPCSelector {
 
     float getYaw();
 
-    MComponent getDisplayName();
-
-    Skin getSkin();
+    MComponent getVisibleName();
 
 
     void setEntityType(Identifier type);
@@ -43,38 +43,37 @@ public interface NPC extends NPCSelector {
 
     void setDisplayName(MComponent component);
 
-    void setSkin(Skin skin);
-
 
     boolean executeCommands(MPlayer player, InventoryGUI.ClickType type);
 
-    void addCommand(InventoryGUI.ClickType click, NPCActionType type, String value, Requirement<MPlayer> requirement);
+    void addCommand(InventoryGUI.ClickType click, NPCAction act);
+
+    default void addCommand(InventoryGUI.ClickType click, NPCActionType type, String value, Requirement<MPlayer> requirement) {
+
+        addCommand(click, new NPCAction(type, this, value, requirement));
+    }
 
     void clearCommands();
 
     void runCommand(String value);
 
-    Iterable<NPCAction> getCommands();
+    Collection<NPCAction> getCommands(InventoryGUI.ClickType type);
 
 
     void addTrait(TraitType trait);
 
     void addTrait(TraitType trait, ConfigSection section);
 
-    boolean hasTrait(TraitType identifier);
+    boolean hasTrait(TraitType trait);
 
     void removeTrait(TraitType trait);
 
     Trait getTrait(TraitType trait);
 
-    Iterable<Trait> getTraits();
+    Collection<Trait> getTraits();
 
     void setTraitConfig(TraitType type, ConfigSection sec, boolean fill);
 
-
-    void tick();
-
-    void spawn();
 
     void respawn();
 

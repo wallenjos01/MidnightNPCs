@@ -1,10 +1,10 @@
-package org.wallentines.midnightnpcs.fabric.trait;
+package org.wallentines.midnightnpcs.trait;
 
+import org.wallentines.midnightlib.config.ConfigSection;
 import org.wallentines.midnightnpcs.api.npc.NPC;
-import org.wallentines.midnightnpcs.common.trait.LookTrait;
-import org.wallentines.midnightnpcs.fabric.entity.NPCEntity;
-import org.wallentines.midnightnpcs.fabric.npc.FabricNPC;
+import org.wallentines.midnightnpcs.NPCEntity;
 import net.minecraft.world.entity.player.Player;
+import org.wallentines.midnightnpcs.api.trait.TraitType;
 
 public class FabricLookTrait extends LookTrait {
 
@@ -15,8 +15,7 @@ public class FabricLookTrait extends LookTrait {
     @Override
     protected void lookAtNearestPlayer(float lookDistance) {
 
-        NPCEntity ent = ((FabricNPC) npc).getEntity();
-        if(ent == null) return;
+        NPCEntity ent = (NPCEntity) npc;
 
         Player pl = ent.level.getNearestPlayer(ent, lookDistance);
         if(pl != null) {
@@ -25,4 +24,11 @@ public class FabricLookTrait extends LookTrait {
             ent.setYHeadRot(ent.getYRot());
         }
     }
+
+    @Override
+    public TraitType getType() {
+        return TYPE;
+    }
+
+    public static final TraitType TYPE = TraitType.create(FabricLookTrait::new, new ConfigSection());
 }

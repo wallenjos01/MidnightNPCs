@@ -1,16 +1,19 @@
 package org.wallentines.midnightnpcs.api.trait;
 
 import org.wallentines.midnightlib.config.ConfigSection;
-import org.wallentines.midnightlib.registry.Identifier;
 
+@SuppressWarnings("unused")
 public interface Trait {
 
-    Identifier getId();
+    TraitType getType();
 
     void loadConfig(ConfigSection sec);
 
     default void onTick() { }
     default void onSpawn() { }
+    default void onRemove() { }
 
-    default ConfigSection saveConfig() { return null; }
+    default ConfigSection saveConfig() { return getType().getDefaultConfig(); }
+
+
 }

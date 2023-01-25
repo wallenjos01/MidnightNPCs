@@ -1,6 +1,5 @@
-package org.wallentines.midnightnpcs.common.npc;
+package org.wallentines.midnightnpcs;
 
-import org.wallentines.midnightcore.api.MidnightCoreAPI;
 import org.wallentines.midnightlib.config.ConfigSection;
 import org.wallentines.midnightcore.api.item.InventoryGUI;
 import org.wallentines.midnightlib.math.Vec3d;
@@ -10,7 +9,6 @@ import org.wallentines.midnightcore.api.player.MPlayer;
 import org.wallentines.midnightlib.requirement.Requirement;
 import org.wallentines.midnightlib.registry.Identifier;
 import org.wallentines.midnightcore.api.text.MComponent;
-import org.wallentines.midnightnpcs.api.MidnightNPCsAPI;
 import org.wallentines.midnightnpcs.api.npc.NPC;
 import org.wallentines.midnightnpcs.api.npc.NPCAction;
 import org.wallentines.midnightnpcs.api.npc.NPCActionType;
@@ -74,7 +72,7 @@ public abstract class AbstractNPC implements NPC {
     }
 
     @Override
-    public MComponent getDisplayName() {
+    public MComponent getVisibleName() {
         return name;
     }
 
@@ -141,7 +139,7 @@ public abstract class AbstractNPC implements NPC {
     }
 
     @Override
-    public Iterable<NPCAction> getCommands() {
+    public Collection<NPCAction> getCommands(InventoryGUI.ClickType type) {
         List<NPCAction> out = new ArrayList<>();
         for(Collection<NPCAction> acts : actions.values()) {
             out.addAll(acts);
@@ -160,25 +158,12 @@ public abstract class AbstractNPC implements NPC {
     @Override
     public void addTrait(TraitType trait, ConfigSection section) {
 
-        if(traits.containsKey(trait)) return;
-
-        Trait instance = trait.create(this);
-
-        try {
-            instance.loadConfig(section);
-
-        } catch (Exception ex) {
-
-            MidnightNPCsAPI.getLogger().warn("An error occurred while initializing a Trait!");
-            ex.printStackTrace();
-        }
-        traits.put(trait, instance);
     }
 
     @Override
-    public boolean hasTrait(TraitType identifier) {
+    public boolean hasTrait(TraitType trait) {
 
-        return traits.containsKey(identifier);
+        return traits.containsKey(trait);
     }
 
     @Override
@@ -188,7 +173,7 @@ public abstract class AbstractNPC implements NPC {
     }
 
     @Override
-    public Iterable<Trait> getTraits() {
+    public Collection<Trait> getTraits() {
 
         return traits.values();
     }
@@ -216,13 +201,7 @@ public abstract class AbstractNPC implements NPC {
         }
     }
 
-    @Override
-    public void tick() {
 
-        for(Trait t : traits.values()) {
-            t.onTick();
-        }
-    }
 
     @Override
     public NPC getSelectedNPC() {
@@ -234,7 +213,7 @@ public abstract class AbstractNPC implements NPC {
         // Ignore
     }
 
-    protected void addCommand(InventoryGUI.ClickType click, NPCAction act) {
+    public void addCommand(InventoryGUI.ClickType click, NPCAction act) {
 
         if(act == null) return;
 

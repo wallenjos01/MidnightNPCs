@@ -1,4 +1,4 @@
-package org.wallentines.midnightnpcs.common.trait;
+package org.wallentines.midnightnpcs.trait;
 
 import org.wallentines.midnightlib.config.ConfigSection;
 import org.wallentines.midnightlib.registry.Identifier;
@@ -14,11 +14,6 @@ public abstract class LookTrait implements Trait {
 
     public LookTrait(NPC npc) {
         this.npc = npc;
-    }
-
-    @Override
-    public Identifier getId() {
-        return ID;
     }
 
     @Override

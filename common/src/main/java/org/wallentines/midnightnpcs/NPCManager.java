@@ -1,9 +1,10 @@
-package org.wallentines.midnightnpcs.common.npc;
+package org.wallentines.midnightnpcs;
 
 import org.wallentines.midnightnpcs.api.npc.NPC;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class NPCManager {
 
     public static final NPCManager INSTANCE = new NPCManager();

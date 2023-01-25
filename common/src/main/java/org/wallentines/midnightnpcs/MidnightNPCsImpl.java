@@ -1,16 +1,14 @@
-package org.wallentines.midnightnpcs.common;
+package org.wallentines.midnightnpcs;
 
-import org.wallentines.midnightcore.api.MidnightCoreAPI;
+import org.wallentines.midnightcore.api.text.LangProvider;
+import org.wallentines.midnightcore.api.text.PlaceholderManager;
+import org.wallentines.midnightcore.api.text.PlaceholderSupplier;
 import org.wallentines.midnightcore.common.util.FileUtil;
 import org.wallentines.midnightlib.config.ConfigSection;
 import org.wallentines.midnightlib.config.FileConfig;
-import org.wallentines.midnightcore.api.module.lang.LangModule;
-import org.wallentines.midnightcore.api.module.lang.LangProvider;
-import org.wallentines.midnightcore.api.player.MPlayer;
 import org.wallentines.midnightlib.registry.Identifier;
 import org.wallentines.midnightnpcs.api.MidnightNPCsAPI;
 import org.wallentines.midnightnpcs.api.npc.NPC;
-import org.wallentines.midnightnpcs.common.util.LangUtil;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -18,12 +16,11 @@ import java.util.UUID;
 
 public class MidnightNPCsImpl extends MidnightNPCsAPI {
 
-    private LangProvider provider;
+    private final LangProvider provider;
 
-    private final File dataFolder;
     private final FileConfig mainConfig;
 
-    public MidnightNPCsImpl(Path dataFolder) {
+    public MidnightNPCsImpl(Path dataFolder, ConfigSection langDefaults) {
         INSTANCE = this;
 
         File fld = FileUtil.tryCreateDirectory(dataFolder);
@@ -31,18 +28,13 @@ public class MidnightNPCsImpl extends MidnightNPCsAPI {
             throw new IllegalStateException("Unable to create data directory " + dataFolder);
         }
 
-        this.dataFolder = fld;
-        this.mainConfig = FileConfig.findOrCreate("config", this.dataFolder);
+        this.mainConfig = FileConfig.findOrCreate("config", fld);
 
-    }
+        FileUtil.tryCreateDirectory(dataFolder.resolve("lang"));
+        provider = new LangProvider(dataFolder.resolve("lang"), langDefaults);
 
-    public void initialize(ConfigSection langDefaults) {
-
-        LangModule module = MidnightCoreAPI.getInstance().getModuleManager().getModule(LangModule.class);
-        provider = module.createProvider(dataFolder.toPath().resolve("lang"), langDefaults);
-
-        LangUtil.registerLangEntries(module);
-
+        PlaceholderManager.INSTANCE.getPlaceholders().register("midnightnpcs_npc_name", PlaceholderSupplier.create(NPC.class, NPC::getVisibleName));
+        PlaceholderManager.INSTANCE.getInlinePlaceholders().register("midnightnpcs_npc_id", PlaceholderSupplier.create(NPC.class, npc -> npc.getUUID().toString()));
     }
 
     @Override

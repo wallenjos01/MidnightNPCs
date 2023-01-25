@@ -1,4 +1,4 @@
-package org.wallentines.midnightnpcs.fabric.mixin;
+package org.wallentines.midnightnpcs.mixin;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.player.Player;
@@ -11,4 +11,5 @@ public interface AccessorPlayer {
     static EntityDataAccessor<Byte> getModelPartsDataId() {
         throw new UnsupportedOperationException();
     }
+
 }

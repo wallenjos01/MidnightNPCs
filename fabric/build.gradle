@@ -11,6 +11,7 @@ plugins {
 repositories {
 
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenLocal()
 }
 
 configurations {
@@ -32,8 +33,13 @@ dependencies {
     modApi "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
     modApi 'org.wallentines:midnightlib:1.0-SNAPSHOT'
 
+    modApi 'org.wallentines.midnightcore:api:1.0-SNAPSHOT'
     modApi 'org.wallentines.midnightcore:common:1.0-SNAPSHOT'
     modApi 'org.wallentines.midnightcore:fabric:1.0-SNAPSHOT'
+
+    //modApi 'org.wallentines.skinsetter:api:3.1-SNAPSHOT'
+    //modApi 'org.wallentines.skinsetter:common:3.1-SNAPSHOT'
+    //modApi 'org.wallentines.skinsetter:fabric:3.1-SNAPSHOT'
 
     implementation project(':api')
     implementation project(':common')
@@ -52,12 +58,12 @@ loom {
     runs {
         client {
             runDir = "run/client"
-            ideConfigGenerated = true
+            ideConfigGenerated = false
             client()
         }
         server {
             runDir = "run/server"
-            ideConfigGenerated = true
+            ideConfigGenerated = false
             server()
         }
     }

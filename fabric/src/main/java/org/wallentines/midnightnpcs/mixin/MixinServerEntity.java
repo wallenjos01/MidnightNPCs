@@ -1,6 +1,6 @@
-package org.wallentines.midnightnpcs.fabric.mixin;
+package org.wallentines.midnightnpcs.mixin;
 
-import org.wallentines.midnightnpcs.fabric.entity.NPCEntity;
+import org.wallentines.midnightnpcs.NPCEntity;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.world.entity.Entity;

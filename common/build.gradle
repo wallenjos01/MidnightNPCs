@@ -7,7 +7,7 @@ repositories {
 
 dependencies {
 
-    compileOnly 'com.mojang:authlib:2.1.28'
+    compileOnly 'com.mojang:authlib:3.5.41'
     compileOnly project(":api")
     compileOnly "org.wallentines.midnightcore:common:1.0-SNAPSHOT"
 
